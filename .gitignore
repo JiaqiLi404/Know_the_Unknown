@@ -1,0 +1,13 @@
+.idea/*
+__pycache__/*
+download/*
+self-rag-main/*
+FlagEmbedding-master/*
+*.json
+*.jsonl
+*.csv
+*.xls
+*.xlsx
+/LLaMA-Factory/models/
+/LLaMA-Factory/data/
+/configs.py
