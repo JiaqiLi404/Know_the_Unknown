@@ -41,8 +41,13 @@ if __name__ == '__main__':
             suf_num = answer1_lower.count('sufficient') - answer1_lower.count('insufficient')
             insuf_num = answer1_lower.count('insufficient')
             if suf_num == insuf_num == 0:
+                pos_sample_count-=1
+                neg_sample_count-=1
                 continue
-            elif suf_num>=insuf_num:
+            # if suf_num>=insuf_num:
+            #     pos_correct = True
+            #     pos_correct_num += 1
+            if answer1_lower.find('insufficient')<0 or (answer1_lower.find('sufficient')>=0 and answer1_lower.find('sufficient') < answer1_lower.find('insufficient')):
                 pos_correct = True
                 pos_correct_num += 1
 
@@ -53,7 +58,10 @@ if __name__ == '__main__':
             answer2_lower = answer2.lower()
             suf_num = answer2_lower.count('sufficient') - answer2_lower.count('insufficient')
             insuf_num = answer2_lower.count('insufficient')
-            if suf_num<=insuf_num:
+            # if suf_num<=insuf_num:
+            #     neg_correct = True
+            #     neg_correct_num += 1
+            if answer2_lower.find('insufficient')>=0 and answer2_lower.find('sufficient') > answer2_lower.find('insufficient'):
                 neg_correct = True
                 neg_correct_num += 1
             print(f'correct: {pos_correct} {neg_correct}')

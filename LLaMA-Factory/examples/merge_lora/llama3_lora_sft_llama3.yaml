@@ -1,0 +1,14 @@
+### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
+
+### model
+model_name_or_path: LLaMA-Factory/models/TrustworthyLLM_Cognition_Finetuning_Model_Llama3_Merged
+adapter_name_or_path: LLaMA-Factory/models/TrustworthyLLM_Cognition_PSQA_Finetuning_Model_Llama3_0
+template: llama3
+finetuning_type: lora
+
+### export
+export_dir: /mnt/f/Models/Llama3.1-8B-Instruct-PSQA
+export_size: 2
+export_device: cuda
+export_legacy_format: false
+

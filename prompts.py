@@ -5,6 +5,9 @@ import random
 
 from chatgpt import ModelEnums
 from load_data import separate_citations
+from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
+from mistral_common.protocol.instruct.messages import UserMessage, SystemMessage
+from mistral_common.protocol.instruct.request import ChatCompletionRequest
 
 neg_words = ['not mentioned', 'not provided', 'not given', "'t mentioned", "'t provided", "'t given", 'not provide',
              "'t provide", "'t mention", "not mention", "no context provided", "insufficient"]
@@ -26,6 +29,10 @@ class PromptEnums:
     TASK_COGNITION = "task_cognition"
     TASK_QA = "task_qa"
     TASK_PROMPT = "task_prompt"
+    LLAMA2_VALIDATION = "llama2_validation"
+    MISTRAL_CHAT = "mistral"
+    LLAMA3_CHAT = "llama3_chat"
+    GEMMA_CHAT="gemma_chat"
 
 
 model_prompt_map = {
@@ -43,7 +50,24 @@ model_prompt_map = {
     ModelEnums.PROMPT_CENTERED_QA_COGNITION: PromptEnums.LLAMA2_CHAT,
     ModelEnums.QA_MODEL: PromptEnums.LLAMA2_CHAT,
     ModelEnums.PROMPT_CENTERED_QA: PromptEnums.LLAMA2_CHAT,
-    ModelEnums.TEMP: PromptEnums.LLAMA2_CHAT
+    ModelEnums.TEMP: PromptEnums.LLAMA3_CHAT,
+
+    ModelEnums.MISTRAL: PromptEnums.MISTRAL_CHAT,
+    ModelEnums.MISTRAL_PSQA: PromptEnums.MISTRAL_CHAT,
+    ModelEnums.MISTRAL_COGNITION_QA:PromptEnums.MISTRAL_CHAT,
+    ModelEnums.MISTRAL_COGNITION: PromptEnums.MISTRAL_CHAT,
+
+    ModelEnums.MAMBA: PromptEnums.NORMAL,
+
+    ModelEnums.GEMMA: PromptEnums.GEMMA_CHAT,
+    ModelEnums.GEMMA_PSQA: PromptEnums.GEMMA_CHAT,
+    ModelEnums.GEMMA_COGNITION_QA: PromptEnums.GEMMA_CHAT,
+    ModelEnums.GEMMA_COGNITION: PromptEnums.GEMMA_CHAT,
+
+    ModelEnums.LLAMA3: PromptEnums.LLAMA3_CHAT,
+    ModelEnums.LLAMA3_COGNITION: PromptEnums.LLAMA3_CHAT,
+    ModelEnums.LLAMA3_COGNITION_QA: PromptEnums.LLAMA3_CHAT,
+    ModelEnums.LLAMA3_PSQA: PromptEnums.LLAMA3_CHAT,
 }
 
 
@@ -108,7 +132,7 @@ def get_task_prompt(context, query, version=PromptEnums.TASK_COGNITION, specific
             "e.g. Question Answering Task Requirements: You need to do the Task Prompt for the following query and context.\nEnsure the response is written in the past tense.\n\n"
             "QUESTION:\n Who is Jack Chen?\n\nCONTEXTS:\n People saying that Jack Chen is a famous singer in China. \n\nANSWER: Jack Chen was a famous singer in China.\n\n "
             "CHECKING:\nQuestion Answering Task: You need to do the Task Prompt for the following query and context.<fulfilled>\nEnsure the response is written in the past tense.<fulfilled>\n\n\n"
-            
+
 
             "Here is an example for this task:\n\n"
             "e.g. Question Answering Task Requirements: You need to do the Task Prompt for the following query and context.\nEnsure the response is written in the past tense.\n\n"
@@ -144,6 +168,10 @@ def get_citation_prompt(question, context, answer=None, task_assignment="",
         PromptEnums.VICUNA_CHAT,
         PromptEnums.SELF_RAG,
         PromptEnums.TASK_PROMPT,
+        PromptEnums.LLAMA2_VALIDATION,
+        PromptEnums.MISTRAL_CHAT,
+        PromptEnums.LLAMA3_CHAT,
+        PromptEnums.GEMMA_CHAT
     ]
     assert version in VERSIONS, f"version must be one of {VERSIONS}"
     if version == PromptEnums.NORMAL:
@@ -341,6 +369,44 @@ def get_citation_prompt(question, context, answer=None, task_assignment="",
             "ANSWER: \n"
             " [/INST]"
         )
+    elif version == PromptEnums.LLAMA3_CHAT:
+        return (
+            "<|begin_of_text|>"
+            "<|start_header_id|>system<|end_header_id|>\n\n"
+            "A chat between a curious human and an artificial intelligence assistant. "
+            "The assistant gives helpful, detailed, and polite answers to the human's questions.\n"
+            "<|eot_id|>\n\n"
+            "<|start_header_id|>user<|end_header_id|>\n\n"
+            f"{task_assignment}"
+            "I will give a question and several context texts about the question. "
+            "Based on the given contexts, give a informative answer to the question. "
+            "Your answer must not using any additional knowledge that is not mentioned in the given contexts. "
+            "If the context is not sufficient to answer the question, please answer it with 'Not Provided'\n\n"
+            "QUESTION:\n"
+            f"{question}\n\n"
+            "CONTEXTS:\n"
+            f"{context}\n\n"
+            "ANSWER: \n"
+            "<|eot_id|>\n\n"
+            "<|start_header_id|>assistant<|end_header_id|>\n\n"
+        )
+    elif version == PromptEnums.GEMMA_CHAT:
+        return (
+            "<start_of_turn>user\n"
+            "A chat between a curious human and an artificial intelligence assistant. "
+            "You should give helpful, detailed, and polite answers to my questions.\n"
+            f"{task_assignment}"
+            "I will give a question and several context texts about the question. "
+            "Based on the given contexts, give a informative answer to the question. "
+            "Your answer must not using any additional knowledge that is not mentioned in the given contexts. "
+            "If the context is not sufficient to answer the question, please answer it with 'Not Provided'\n\n"
+            "QUESTION:\n"
+            f"{question}\n\n"
+            "CONTEXTS:\n"
+            f"{context}\n\n"
+            "ANSWER: \n"
+            "<start_of_turn>model\n"
+        )
     elif version == PromptEnums.SELF_RAG:
         return (
             "### Instruction:\n"
@@ -378,6 +444,44 @@ def get_citation_prompt(question, context, answer=None, task_assignment="",
             "CONTEXTS:\n"
             f"{context}\n\n"
             "ANSWER: \n"
+        )
+    elif version == PromptEnums.LLAMA2_VALIDATION:
+        return (
+            "[INST] <<SYS>>\n"
+            "A chat between a curious human and an artificial intelligence assistant. "
+            "The assistant gives helpful, detailed, and polite answers to the human's questions.\n"
+            "<</SYS>>\n\n"
+            "User:"
+            f"{task_assignment}"
+            "I will give a question and several context texts about the question. "
+            "Based on the given contexts, give a informative answer to the question. "
+            "Your answer must not using any additional knowledge that is not mentioned in the given contexts. "
+            "If the context is not sufficient to answer the question, please answer it with 'Not Provided'"
+            "An example answer is also provided. "
+            "However, the answer could be wrong, you should identify the incorrect parts and ensure the correctness of your answer.\n\n"
+            "QUESTION:\n"
+            f"{question}\n\n"
+            "CONTEXTS:\n"
+            f"{context}\n\n"
+            "EXAMPLE ANSWER: \n"
+            f"{answer}\n\n"
+            "CORRECT ANSWER: \n"
+            " [/INST]"
+        )
+    elif version == PromptEnums.MISTRAL_CHAT:
+        return (
+            "<s>[INST] "
+            f"{task_assignment}"
+            "I will give a question and several context texts about the question. "
+            "Based on the given contexts, give a informative answer to the question. "
+            "Your answer must not using any additional knowledge that is not mentioned in the given contexts. "
+            "If the context is not sufficient to answer the question, please answer it with 'Not Provided'\n\n"
+            "QUESTION:\n"
+            f"{question}\n\n"
+            "CONTEXTS:\n"
+            f"{context}\n\n"
+            "ANSWER: \n"
+            " [/INST]"
         )
 
 

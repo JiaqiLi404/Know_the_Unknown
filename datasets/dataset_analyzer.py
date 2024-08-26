@@ -86,6 +86,7 @@ def count_vulnerable_samples(file_name):
             f"total samples: {len(res)} | vulnerable samples: {len(empty_res)} | proportion:{len(empty_res) / len(res) * 100:.2f}% \n")
 
 
+
 # count_vulnerable_samples("simplified-nq-train.jsonl")
 # count_vulnerable_samples("self-rag-train.jsonl")
 count_vulnerable_samples("ASQA.json")

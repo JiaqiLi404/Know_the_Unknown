@@ -1,0 +1,10 @@
+vllm
+openpyxl
+jsonlines
+openai
+langchain_openai
+langchain
+transformers
+mistral_common
+peft
+trl>=0.8.6

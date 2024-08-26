@@ -55,5 +55,37 @@ def generate_trustworthy_benchmark():
     save_xls_dataset({"benchmark": clean_dataset, 'benchmark_uncleaned': benchmark}, os.path.join('datasets',"TrustworthyLLM Benchmark.xlsx"),
                      ['id', 'context', 'pos_query', 'pos_answer', 'neg_query'])
 
+def generate_trustworthy_benchmark_coqa():
+    file_path = os.path.join("datasets", "original", "coqa_abg_train.json")
+    res = []
+    dataset=[]
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        for sample in data['data']:
+            res.append(sample)
+    for sample in res:
+        if sample['ambiguity']!='non_ambiguous':
+            context = sample['story']
+            for k,clarification_dicts in sample.items():
+                if k.startswith('clarification_turn'):
+                    pos_query = ""
+                    pos_answer = ""
+                    neg_query = ""
+                    for clarification_dict in clarification_dicts['answers']:
+                        if clarification_dict['org_ans']=='Unknown':
+                            neg_query = clarification_dicts['question']+clarification_dict['clr_ans']
+                        else:
+                            pos_query =  clarification_dicts['question']+clarification_dict['clr_ans']
+                            pos_answer = clarification_dict['org_ans']
+                    if pos_query!="" and pos_answer!="" and neg_query!="":
+                        dataset.append([len(dataset),context,pos_query,pos_answer,neg_query])
 
-generate_trustworthy_benchmark()
+
+
+    print("total samples: ", len(res))
+    #save_xls_dataset({"benchmark": res}, os.path.join('datasets',"TrustworthyLLM Benchmark2.xlsx"),
+    #                  ['id', 'context', 'pos_query', 'pos_answer', 'neg_query'])
+
+
+# generate_trustworthy_benchmark()
+generate_trustworthy_benchmark_coqa()

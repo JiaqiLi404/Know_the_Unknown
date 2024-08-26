@@ -1,5 +1,13 @@
 cd /root/autodl-tmp/Why_Hallucinations_in_RAG/LLaMA-Factory
 
+cd /root/autodl-tmp/proj/LLaMA-Factory
+python /root/autodl-tmp/proj/main_run_benchmark.py
+python /root/autodl-tmp/proj/LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path /root/autodl-tmp/model/gemma-2-9b-it --create_new_adapter --dataset TrustworthyLLM_Cognition_Finetuning_Dataset --template gemma --finetuning_type lora --lora_target q_proj,v_proj --output_dir /root/autodl-tmp/model/TrustworthyLLM_Cognition_Finetuning_Model_Gemma --overwrite_cache --per_device_train_batch_size 1 --gradient_accumulation_steps 4 --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 4e-5 --num_train_epochs 1.0 --plot_loss --fp16
+python /root/autodl-tmp/proj/LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path /root/autodl-tmp/model/TrustworthyLLM_Cognition_Finetuning_Model_Gemma_Merged --create_new_adapter --dataset TrustworthyLLM_PromptSensitive_Finetuning_Dataset --template gemma --finetuning_type lora --lora_target q_proj,v_proj --output_dir /root/autodl-tmp/model/TrustworthyLLM_Cognition_PSQA_Finetuning_Model_Gemma --overwrite_cache --per_device_train_batch_size 1 --gradient_accumulation_steps 4 --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 4e-5 --num_train_epochs 10.0 --plot_loss --fp16
+python /root/autodl-tmp/proj/LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path /root/autodl-tmp/model/TrustworthyLLM_Cognition_Finetuning_Model_Gemma_Merged --create_new_adapter --dataset TrustworthyLLM_QA_Finetuning_Dataset --template gemma --finetuning_type lora --lora_target q_proj,v_proj --output_dir /root/autodl-tmp/model/TrustworthyLLM_Cognition_QA_Finetuning_Model_Gemma --overwrite_cache --per_device_train_batch_size 1 --gradient_accumulation_steps 4 --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5 --num_train_epochs 3.0 --plot_loss --fp16
+
+
+
 Train Congnition
 
 python src/train_bash.py --stage sft --do_train --model_name_or_path models/llama-2-7b-chat-hf --create_new_adapter --dataset TrustworthyLLM_Cognition_Finetuning_Dataset --template llama2 --finetuning_type lora --lora_target q_proj,v_proj --output_dir models/TrustworthyLLM_Cognition_Finetuning_Model --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4 --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 4e-5 --num_train_epochs 3.0 --plot_loss --fp16

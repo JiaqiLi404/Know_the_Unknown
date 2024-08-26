@@ -1,0 +1,14 @@
+### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
+
+### model
+model_name_or_path: /root/autodl-tmp/model/gemma-2-9b-it
+adapter_name_or_path: /root/autodl-tmp/model/TrustworthyLLM_Cognition_Finetuning_Model_Gemma
+template: gemma
+finetuning_type: lora
+
+### export
+export_dir: /root/autodl-tmp/model/TrustworthyLLM_Cognition_Finetuning_Model_Gemma_Merged
+export_size: 2
+export_device: cuda
+export_legacy_format: false
+
