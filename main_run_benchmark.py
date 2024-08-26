@@ -8,7 +8,7 @@ import os
 import json
 
 if __name__ == '__main__':
-    model = ModelEnums.TEMP
+    model = ModelEnums.LLAMA3
     prompt_flag = prompts.model_prompt_map[model]
     # prompt_flag = prompts.PromptEnums.TASK_PROMPT
     neg_words = prompts.neg_words
@@ -16,9 +16,14 @@ if __name__ == '__main__':
     task_assignment_prompt = ("Trustworthy Question Answering Task: "
                               "You need to utilize the ability learnt during both the Question Answering Task"
                               " and Cognition Assessment Task. "
-                              "And only provide the answers which are sufficiently supported by the context, otherwise provide 'Not Provided'\n") \
-        if model in [ModelEnums.TEMP, ModelEnums.COGNITION, ModelEnums.COGNITION_QA, ModelEnums.PROMPT_CENTERED_QA_COGNITION] else ""
-    task_assignment_prompt = ""
+                              # LLAMA2: "And only provide the answers which are sufficiently supported by the context, otherwise provide 'Not Provided'\n"
+                              # llama3: "And provide 'Not Provided' when the context is insufficient\n"
+                              # GEMMA2: "You should look into the tiny difference between the query and context, and answer as much as you can, while providing 'Not Provided' for answers which are insufficiently supported by the context\n"
+                              # "You must provide specific analysis for your answer. Especially for answers which are insufficiently supported by the context\n"
+                              "And only provide the answers which are sufficiently supported by the context, otherwise provide 'Not Provided'\n"
+                              ) \
+        if model in [ModelEnums.TEMP, ModelEnums.COGNITION, ModelEnums.COGNITION_QA, ModelEnums.PROMPT_CENTERED_QA_COGNITION,ModelEnums.MISTRAL_PSQA,ModelEnums.LLAMA3_PSQA,ModelEnums.GEMMA_PSQA] else ""
+    # task_assignment_prompt = ""
 
     dataset, xls_file = load_xls_dataset(os.path.join('datasets', 'TrustworthyLLM Benchmark.xlsx'))
     reference_sheets = ["benchmark"]
@@ -35,6 +40,9 @@ if __name__ == '__main__':
             [id, context, pos_query, pos_answer, neg_query] = dataset[k][i]
             pos_answer = pos_answer[1:-1].split(',')
             pos_answer = [answer.strip()[1:-1].lower() for answer in pos_answer]
+            for j in range(len(pos_answer)):
+                pos_answer.extend(pos_answer[j].split())
+            pos_answer = list(set(pos_answer))
             print("context:", context)
             print("pos_query:", pos_query)
             print("pos_answer_gt:", pos_answer)
@@ -54,11 +62,15 @@ if __name__ == '__main__':
             answer2 = call_llm(query=prompt2, model=model, modelName="default")
             print("neg_answer:", answer2)
             answer2_lower = answer2.lower()
-            for word in neg_words:
-                if answer2_lower.find(word) != -1:
-                    neg_correct = True
-                    neg_correct_num += 1
-                    break
+            if len(answer2_lower.strip()) == 0:
+                neg_correct = True
+                neg_correct_num += 1
+            else:
+                for word in neg_words:
+                    if answer2_lower.find(word) != -1:
+                        neg_correct = True
+                        neg_correct_num += 1
+                        break
             print(f'correct: {pos_correct} {neg_correct}')
             print(f'correct rate: {100 * pos_correct_num / (i + 1):.2f} {100 * neg_correct_num / (i + 1):.2f}')
             print('-' * 10, f" {i + 1}/{len(dataset[k])} ", '-' * 10)
