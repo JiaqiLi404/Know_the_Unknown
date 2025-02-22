@@ -1,0 +1,13 @@
+### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
+# llamafactory-cli export LLaMA-Factory-configs/merge_lora/PARAREL_lora_sft.yaml
+### model
+model_name_or_path: "LLaMA-Factory/models/TrustworthyLLM_Cognition_PSQA_Finetuning_Model_0_Merged"
+adapter_name_or_path: LLaMA-Factory/models/TrustworthyLLM_PARAREL
+template: llama2
+finetuning_type: lora
+
+### export
+export_dir: LLaMA-Factory/models/TrustworthyLLM_PARAREL_Merged
+export_size: 2
+export_device: cuda
+export_legacy_format: false
