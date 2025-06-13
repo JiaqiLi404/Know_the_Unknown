@@ -25,7 +25,7 @@ python data/scripts/generate_finetuning_dataset.py
 
 
 ## Pretrained Models
-We provide the pretrained models of our fine-tuned models at [Onedrive](https://i3h5-my.sharepoint.com/:f:/g/personal/admin_ljqpersonal_com/Eobo71eMD-1Eo3sAgm-gtAMBu64hzFOw-7jdLy-IsiOtuQ).
+We provide the pretrained models of our fine-tuned models at [Onedrive](https://i3h5-my.sharepoint.com/:f:/g/personal/admin_ljqpersonal_com/EgDW_s-8pxRNkaPEfc70GoIBunKC-RDY0ZyzmZyqMrV7Yw?e=swb694).
 Those modes ended with `merged` are the entire weights merged with the original weights, while the others are just Lora heads.
 The best Llama2 model is "TrustworthyLLM_Cognition_PSQA_Finetuning_Model_0", which is fine-tuned by 2 stages.
 You should use the Llama2-7B-Chat model as the base model for the Lora loading.
