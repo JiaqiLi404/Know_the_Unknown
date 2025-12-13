@@ -8,7 +8,7 @@ import transformers
 from openai import OpenAI
 from langchain_openai import ChatOpenAI as ChatOpenAI
 from langchain_openai import OpenAI as LangchainOpenAI
-from langchain.chains import create_citation_fuzzy_match_chain
+from langchain_classic.chains import create_citation_fuzzy_match_chain
 from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
@@ -28,6 +28,7 @@ from datasets.formatting.formatting import LazyRow
 api_key = openai_apikey
 client = OpenAI(api_key=api_key, base_url="https://api.zhizengzeng.com/v1")
 lora_model = None
+lora_request = None
 tf_model = None
 tf_tokenizer = None
 peft_model = None
@@ -376,43 +377,61 @@ class ModelEnums:
     GPT3T = "gpt-3.5-turbo"
     GPT4 = "gpt-4"
     GPT4T = 'gpt-4-1106-preview'
+    GPT4O = 'gpt-4o'
     ORION_RAG_QA_14B = "OrionStarAI/Orion-14B"
     LOCAL = "local"
     LLAMA2_CHAT_7B = 'llama2c-7b'
     VICUNA_7B = 'vicuna-7b'
     SELF_RAG = 'self-rag'
-    COGNITION = 'TrustworthyLLM_Cognition_Finetuning_Model'
-    COGNITION_QA = 'TrustworthyLLM_Cognition_QA_Finetuning_Model'
-    PROMPT_CENTERED = 'TrustworthyLLM_Ablation_PSQA_Finetuning_Model'
-    PROMPT_CENTERED_QA_COGNITION = "TrustworthyLLM_Cognition_PSQA_Finetuning_Model_0"
-    QA_MODEL = "TrustworthyLLM_Ablation_QA_Finetuning_Model"
-    PROMPT_CENTERED_QA = "trustworthy_prompt_qa_model"
+    LLAMA2_UNCERTAINTY_TUNING = 'Uncertainty_Tuning_Llama2'
+    LLAMA2_UNCERTAINTY_TUNING_QA = 'Uncertainty_Tuning_QA_Llama2'
+    LLAMA2_SENSITIVITY_TUNING = 'Ablation_LLAMA2_Sensitivity_Tuning'
+    LLAMA2_UNCERTAINTY_SENSITIVITY = "Uncertainty_Sensitivity_Tuning_Llama2"
+    QA_MODEL = "Ablation_QA_Llama2"
     TEMP = "temp"
 
     SAMPLING_LLAMA = "sampling_llama"
     VALIDATION_LLAMA = "validation_llama"
 
     MISTRAL = "mistral"
-    MISTRAL_COGNITION = "TrustworthyLLM_Cognition_Finetuning_Model_Mistral"
-    MISTRAL_COGNITION_QA = "TrustworthyLLM_Cognition_QA_Finetuning_Model_Mistral"
-    MISTRAL_PSQA = "TrustworthyLLM_Cognition_PSQA_Finetuning_Model_Mistral"
+    MISTRAL_UNCERTAINTY_TUNING = "Uncertainty_Tuning_Mistral"
+    MISTRAL_UNCERTAINTY_TUNING_QA = "Uncertainty_Tuning_QA_Mistral"
+    MISTRAL_UST = "Uncertainty_Tuning_UST_Finetuning_Model_Mistral"
 
     MAMBA = "tiiuae/falcon-mamba-7b-instruct"
 
     GEMMA = "Gemma-2-9b-it"
-    GEMMA_COGNITION = 'TrustworthyLLM_Cognition_Finetuning_Model_Gemma'
-    GEMMA_COGNITION_QA = 'TrustworthyLLM_Cognition_QA_Finetuning_Model_Gemma'
-    GEMMA_PSQA = 'TrustworthyLLM_Cognition_PSQA_Finetuning_Model_Gemma'
-    LLAMA3 = 'llama3'
-    LLAMA3_COGNITION = 'TrustworthyLLM_Cognition_Finetuning_Model_Llama3'
-    LLAMA3_COGNITION_QA = 'TrustworthyLLM_Cognition_QA_Finetuning_Model_Llama3'
-    LLAMA3_PSQA = 'TrustworthyLLM_Cognition_PSQA_Finetuning_Model_Llama3_0'
+    GEMMA_UNCERTAINTY_TUNING = 'Uncertainty_Tuning_Gemma'
+    GEMMA_UNCERTAINTY_TUNING_QA = 'Uncertainty_Tuning_QA_Gemma'
+    GEMMA_UST = 'Uncertainty_Sensitivity_Tuning_Gemma'
+
+    LLAMA3_8B = 'Llama3.1-8B-Instruct'
+    LLAMA3_8B_UNCERTAINTY_TUNING = 'Uncertainty_Tuning_Llama3_8B'
+    LLAMA3_8B_UNCERTAINTY_TUNING_QA = 'Uncertainty_Tuning_QA_Llama3_8B'
+    LLAMA3_8B_UST = 'Uncertainty_Sensitivity_Tuning_Llama3_8B'
+
+    LLAMA3_3B = 'Llama3.2-3B-Instruct'
+    LLAMA3_3B_UNCERTAINTY_TUNING = 'Uncertainty_Tuning_Llama3_3B'
+    LLAMA3_3B_UNCERTAINTY_TUNING_QA = 'Uncertainty_Tuning_QA_Llama3_3B'
+    LLAMA3_3B_UST = 'Uncertainty_Sensitivity_Tuning_Llama3_3B'
+
+    LLAMA3_1B = 'Llama-3.2-1B-Instruct'
+    LLAMA3_1B_UNCERTAINTY_TUNING = 'Uncertainty_Tuning_Llama3_1B'
+    LLAMA3_1B_UNCERTAINTY_TUNING_QA = 'Uncertainty_Tuning_QA_Llama3_1B'
+    LLAMA3_1B_UST = 'Uncertainty_Sensitivity_Tuning_Llama3_1B'
+
+    GEMMA3_1B = 'gemma-3-1b-it'
+    GEMMA3_1B_UST = 'Uncertainty_Sensitivity_Tuning_Gemma3_1B'
+    GEMMA3_4B = 'gemma-3-4b-it'
+    GEMMA3_4B_UST = 'Uncertainty_Sensitivity_Tuning_Gemma3_4B'
+    GEMMA3_12B = 'gemma-3-12b-it'
+    GEMMA3_12B_UST = 'Uncertainty_Sensitivity_Tuning_Gemma3_12B'
 
     CALIBRATION = "Llama-2-7b-chat-hf-ct-oe"
     HONESTY = "confucius-confidence-verb"
-    HONESTY_COGNITION = 'Honesty_Cognition_Finetuning_Model'
+    HONESTY_SENSITIVITY_TUNING = 'Honesty_Sensitivity_Tuning_Finetuning_Model'
 
-    CONTEXT_DPO= "Context-Faithful-LLaMA-2-7b-chat-hf"
+    CONTEXT_DPO = "Context-Faithful-LLaMA-2-7b-chat-hf"
 
 
 def handle_logits(logits, traces=('no', 'not'), strict=True, **kwargs):
@@ -433,83 +452,79 @@ def handle_logits(logits, traces=('no', 'not'), strict=True, **kwargs):
     return max_logit
 
 
-def call_lora(prompt, model, trace_logit=False, traces=('no', 'not'), strict=True,
-              modelName="/mnt/e/OneDrive - wqa/Models/llama-2-7b-chat-hf", **kwargs):
-    global lora_model
+def call_lora(prompt, model, trace_logit=False, traces=('no', 'not'), strict=True, **kwargs):
+    global lora_model, lora_request
     if lora_model is None:
-        lora_model = LLM(model=modelName, enable_lora=True,
-                         gpu_memory_utilization=0.65, max_model_len=1500, max_lora_rank=64)
+        modelPath = "/mnt/e/OneDrive - wqa/Models"
+        size_map = ["1b", "3b", "4b", "7b", "8b", "9b", "12b"]
+        size = next((s for s in size_map if s in model.lower()), "")
+
+        modelName = ""
+        vanilla_name = ""
+        if "gemma3" in model.lower() or "gemma-3" in model.lower():
+            modelName = "Gemma3"
+            vanilla_name = f"gemma-3-{size}-it"
+        elif "gemma" in model.lower():
+            modelName = "Gemma"
+            size = ""
+            vanilla_name = f"Gemma-2-{size}-it"
+        elif "llama3" in model.lower():
+            modelName = "Llama3"
+            vanilla_name = f"Llama-3.2-{size.upper()}-Instruct" if size != "8b" else "Llama3.1-8B-Instruct"
+        elif "mistral" in model.lower():
+            modelName = "Mistral"
+            vanilla_name = "Mistral-7B-Instruct-v0.2"
+        elif "llama2" in model.lower():
+            modelName = "Llama2"
+            size = ""
+            vanilla_name = "llama/llama-2-7b-chat-hf"
+
+        size = size.upper()
+        size = f"_{size}" if size else ""
+
+        if modelName == "":
+            modelName = f"{modelPath}/{model}"
+            lora_request = None
+        else:
+            lora_path = None
+            if "Uncertainty_Sensitivity_Tuning" in model:
+                modelName = f"models/Uncertainty_Tuning_{modelName}{size}_Merged"
+                lora_path = model
+            elif "Uncertainty_Tuning_QA" in model:
+                modelName = f"models/Uncertainty_Tuning_{modelName}{size}_Merged"
+                lora_path = model
+            elif "Uncertainty_Tuning" in model:
+                modelName = f"{modelPath}/{vanilla_name}"
+                lora_path = model
+            else:
+                modelName = f"{modelPath}/{vanilla_name}"
+                lora_request = None
+
+            if lora_path and os.path.exists(f"LLaMA-Factory/models/{model}"):
+                lora_path = f"LLaMA-Factory/models/{model}"
+            elif lora_path:
+                lora_path = f"models/{model}"
+            lora_request = LoRARequest("augmentation_adapter", 1, lora_path) if lora_path else None
+
+        print(f"modelName: {modelName}", flush=True, file=sys.stdout)
+        print(f"lora_request: {lora_request}", flush=True, file=sys.stdout)
+        lora_model = LLM(model=modelName, enable_lora=True, gpu_memory_utilization=0.65, max_model_len=2000,
+                         max_lora_rank=64)
+
     sampling_params = SamplingParams(
         temperature=0,
-        max_tokens=150,
+        max_tokens=200,
         logprobs=5 if trace_logit else None
     )
 
     outputs = lora_model.generate(
         prompt,
         sampling_params,
-        lora_request=LoRARequest("augmentation_adapter", 1, f"LLaMA-Factory/models/{model}")
+        lora_request=lora_request
     )
     # outputs the logits
     if trace_logit:
         return outputs[0].outputs[0].text, handle_logits(outputs[0].outputs[0].logprobs, traces=traces, strict=strict)
-    return outputs[0].outputs[0].text
-
-
-def call_lora_mistral(prompt, model, **kwargs):
-    global lora_model
-    base_path = "/mnt/e/One_Drive/\"OneDrive - wqa\"/Models/Mistral-7B-Instruct-v0.2"
-    if model == ModelEnums.MISTRAL_PSQA or model == ModelEnums.MISTRAL_COGNITION_QA:
-        base_path = "LLaMA-Factory/models/TrustworthyLLM_Cognition_Finetuning_Model_Mistral_Merged"
-    if lora_model is None:
-        lora_model = LLM(model=base_path, enable_lora=True, gpu_memory_utilization=0.95, max_model_len=1600, )
-    sampling_params = SamplingParams(
-        temperature=0,
-        max_tokens=200
-    )
-    outputs = lora_model.generate(
-        prompt,
-        sampling_params,
-        lora_request=LoRARequest("augmentation_adapter", 1, f"LLaMA-Factory/models/{model}")
-    )
-    return outputs[0].outputs[0].text
-
-
-def call_lora_llama3(prompt, model, **kwargs):
-    global lora_model
-    base_path = "/mnt/f/Models/Llama3.1-8B-Instruct"
-    if model == ModelEnums.LLAMA3_COGNITION_QA or model == ModelEnums.LLAMA3_PSQA:
-        base_path = "LLaMA-Factory/models/TrustworthyLLM_Cognition_Finetuning_Model_Llama3_Merged"
-    if lora_model is None:
-        lora_model = LLM(model=base_path, enable_lora=True, gpu_memory_utilization=0.90, max_model_len=1600, )
-    sampling_params = SamplingParams(
-        temperature=0,
-        max_tokens=200
-    )
-    outputs = lora_model.generate(
-        prompt,
-        sampling_params,
-        lora_request=LoRARequest("augmentation_adapter", 1, f"LLaMA-Factory/models/{model}")
-    )
-    return outputs[0].outputs[0].text
-
-
-def call_lora_gemma(prompt, model, **kwargs):
-    global lora_model
-    base_path = "/mnt/e/One_Drive/\"OneDrive - wqa\"/Models/Gemma-2-9b-it"
-    if model == ModelEnums.GEMMA_COGNITION_QA or model == ModelEnums.GEMMA_PSQA:
-        base_path = "/root/autodl-tmp/model/TrustworthyLLM_Cognition_Finetuning_Model_Gemma_Merged"
-    if lora_model is None:
-        lora_model = LLM(model=base_path, enable_lora=True, gpu_memory_utilization=0.98, max_model_len=1400, )
-    sampling_params = SamplingParams(
-        temperature=0,
-        max_tokens=200
-    )
-    outputs = lora_model.generate(
-        prompt,
-        sampling_params,
-        lora_request=LoRARequest("augmentation_adapter", 1, f"/root/autodl-tmp/model/{model}")
-    )
     return outputs[0].outputs[0].text
 
 
@@ -708,7 +723,6 @@ def ask_gpt(query, model=ModelEnums.GPT3T, logit=0, **kwargs):
         )
     if logit != 0:
         return completion.choices[0].message.content, completion.choices[0].logprobs.content
-    print(completion)
     return completion.choices[0].message.content
 
 
@@ -719,8 +733,8 @@ def langchain_citation(query, context, model=ModelEnums.GPT4T):
     return result
 
 
-def call_llm(query, model, **kwargs):
-    if model == ModelEnums.GPT4T or model == ModelEnums.GPT3T or model == ModelEnums.GPT4:
+def call_llm(query, model: str, **kwargs):
+    if model == ModelEnums.GPT4T or model == ModelEnums.GPT3T or model == ModelEnums.GPT4 or model == ModelEnums.GPT4O:
         return ask_gpt(query, model, **kwargs)
     if model in [ModelEnums.ORION_RAG_QA_14B, ModelEnums.MAMBA]:
         return call_transformers(query, model)
@@ -728,22 +742,10 @@ def call_llm(query, model, **kwargs):
         return call_Honesty(query, model, **kwargs)
     if model == ModelEnums.CALIBRATION:
         return call_Calibration(query, model, **kwargs)
-    if model in [ModelEnums.COGNITION, ModelEnums.PROMPT_CENTERED, ModelEnums.COGNITION_QA,
-                 ModelEnums.PROMPT_CENTERED_QA_COGNITION, ModelEnums.QA_MODEL,
-                 ModelEnums.PROMPT_CENTERED_QA, ModelEnums.HONESTY_COGNITION,ModelEnums.CONTEXT_DPO]:
+    if 'mistral' in model.lower() or 'llama' in model.lower() or 'gemma' in model.lower():
         return call_lora(query, model, **kwargs)
-    if model == ModelEnums.MISTRAL_PSQA or model == ModelEnums.MISTRAL_COGNITION or model == ModelEnums.MISTRAL_COGNITION_QA:
-        return call_lora_mistral(query, model)
-    if model == ModelEnums.LLAMA3_COGNITION or model == ModelEnums.LLAMA3_COGNITION_QA or model == ModelEnums.LLAMA3_PSQA:
-        return call_lora_llama3(query, model)
-    if model == ModelEnums.GEMMA_COGNITION or model == ModelEnums.GEMMA_COGNITION_QA or model == ModelEnums.GEMMA_PSQA:
-        return call_lora_gemma(query, model)
     if model == ModelEnums.SAMPLING_LLAMA:
         return call_vllm_sampling(query, **kwargs)
-    if model == ModelEnums.MISTRAL:
-        return call_vllm(query, modelName="/dcs/large/u5590030/Models/Mistral-7B-Instruct-v0.2", api=None)
-    if model == ModelEnums.GEMMA:
-        return call_vllm(query, modelName="/dcs/large/u5590030/Models/Gemma-2-9b-it", api=None)
     return call_vllm(query, **kwargs)
 
 

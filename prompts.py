@@ -11,7 +11,8 @@ from mistral_common.protocol.instruct.request import ChatCompletionRequest
 
 neg_words = ['not mentioned', 'not provided', 'not given', "'t mentioned", "'t provided", "'t given", 'not provide',
              "'t provide", "'t mention", "not mention", "no context provided", "insufficient", "not familiar",
-             "not aware", "apologize","not able to","not make sense","'t make sense", "'t know","not know"]
+             "t sufficient", "not aware", "apologize", "not able to", "not make sense", "'t make sense", "'t know",
+             "not know"]
 
 
 class PromptEnums:
